@@ -32,6 +32,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'django_extensions',
     'predictions.apps.PredictionsConfig',
     'django.contrib.admin',
     'django.contrib.auth',
