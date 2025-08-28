@@ -5,7 +5,7 @@ Requires:
     python-decouple: For loading API key from .env.
 
 Example:
-    python fetch_seasons.py
+    python manage.py runscript fetch_seasons
 """
 
 import requests
