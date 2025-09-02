@@ -12,6 +12,8 @@ STATUS_CHOICES = [
 from django.contrib.auth.models import User
 from django.db import models
 
+
+#class Country(models.Model): UZUPEŁNIĆ
 class League(models.Model):
     """ Represents a football league.
     
@@ -159,7 +161,7 @@ class Prediction(models.Model):
         unique_together: Ensures that a user can make only one prediction per fixture within a user group.
         indexes: Defines database indexes for optimized queries.
     """
-    
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='predictions')
     fixture = models.ForeignKey(Fixture, on_delete=models.CASCADE, related_name='predictions')
     predicted_home_score = models.IntegerField()
