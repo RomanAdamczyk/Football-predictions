@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 from django.contrib.auth.models import User
 from .models import League, Season, Team, Fixture , Prediction, UserGroup
 
@@ -46,14 +47,43 @@ class LeagueSerializer(serializers.HyperlinkedModelSerializer):
 class FixtureSerializer(serializers.HyperlinkedModelSerializer):
     """
     Serializer for the Fixture model, including season details.
+    Also includes user-specific prediction data if available.
     """
+
     season = SeasonSerializer(read_only=True)
     home_team = serializers.StringRelatedField(source='home_team.name', read_only=True)
     away_team = serializers.StringRelatedField(source='away_team.name', read_only=True)
+    user_prediction = serializers.SerializerMethodField()
+    url = serializers.SerializerMethodField()
 
+    def get_user_prediction(self, obj):
+        user = self.context['request'].user
+        access_code = self.context['request'].query_params.get('access_code')
+        if access_code:
+            user_group = UserGroup.objects.filter(access_code=access_code, members=user).first()
+            if user_group:
+                prediction = Prediction.objects.filter(user=user, fixture=obj, user_group=user_group).first()
+                if prediction:
+                    return {
+                        'predicted_home_score': prediction.predicted_home_score,
+                        'predicted_away_score': prediction.predicted_away_score,
+                        'created_at': prediction.created_at
+                    }
+        return None
+    
+    def get_url(self, obj):
+        user = self.context['request'].user
+        access_code = self.context['request'].query_params.get('access_code')
+
+        prediction = self.get_user_prediction(obj)
+        if prediction:
+            return None  # User has already made a prediction
+        else:
+            return reverse('prediction-create', request=self.context['request']) + f"?access_code={access_code}"
+                        
     class Meta:
         model = Fixture
-        fields = ['url','season', 'date', 'home_team', 'away_team', 'home_score', 'away_score', 'status', 'round','round_name','api_id']
+        fields = ['url','season', 'date', 'home_team', 'away_team', 'home_score', 'away_score', 'status', 'round','round_name','api_id', 'user_prediction']
 
 class PredictionSerializer(serializers.ModelSerializer):
     """

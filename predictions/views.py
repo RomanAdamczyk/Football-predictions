@@ -16,17 +16,26 @@ class SeasonDetailView(generics.RetrieveAPIView):
     serializer_class = SeasonSerializer
 
 class FixtureListView(generics.ListAPIView):
-    queryset = Fixture.objects.all()
+    permission_classes = [IsAuthenticated]
     serializer_class = FixtureSerializer
+    
+    def get_queryset(self):
+        access_code = self.request.query_params.get('access_code')
+        if access_code:
+            user_group = UserGroup.objects.filter(
+                access_code=access_code, members=self.request.user).first()
+            if user_group and user_group.season:
+                return Fixture.objects.filter(season=user_group.season, status='NS').select_related('season', 'season__league')
+        return None
 
 class FixtureDetailView(generics.RetrieveAPIView):
     queryset = Fixture.objects.all()
     serializer_class = FixtureSerializer
 
 class PredictionListView(generics.ListAPIView):
-    queryset = Prediction.objects.all()
+    permission_classes = [IsAuthenticated]
     serializer_class = PredictionSerializer
-
+        
 class PredictionDetailView(generics.RetrieveAPIView):
     queryset = Prediction.objects.all()
     serializer_class = PredictionSerializer
@@ -36,7 +45,7 @@ class GroupListView(generics.ListAPIView):
     serializer_class = UserGroupSerializer
 
     def get_queryset(self):
-        return UserGroup.objects.filter(members=self.request.user)
+        return UserGroup.objects.all()#filter(members=self.request.user)
 
 class PredictionCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
@@ -51,7 +60,7 @@ class PredictionCreateView(generics.ListCreateAPIView):
         access_code = self.request.query_params.get('access_code')
         if access_code:
             user_group = UserGroup.objects.filter(
-                acces_code=access_code, members=self.request.user).first()
+                access_code=access_code, members=self.request.user).first()
             if user_group and user_group.season:
                 return Prediction.objects.filter(
                     user=self.request.user,
