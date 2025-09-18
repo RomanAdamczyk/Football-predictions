@@ -1,8 +1,9 @@
 from rest_framework import generics
 from .models import League, Season, Fixture, Prediction, UserGroup
-from .serializers import LeagueSerializer, SeasonSerializer, FixtureSerializer, PredictionSerializer, PredictionCreateSerializer, UserGroupSerializer
+from .serializers import LeagueSerializer, SeasonSerializer, FixtureSerializer, UserGroupSerializer
+from .serializers import PredictionSerializer, PredictionCreateSerializer, PredictionUpdateSerializer
 from rest_framework.permissions import IsAuthenticated
-
+from rest_framework.exceptions import ValidationError
 class LeagueListView(generics.ListAPIView):
     queryset = League.objects.all()
     serializer_class = LeagueSerializer
@@ -36,17 +37,6 @@ class PredictionListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PredictionSerializer
         
-class PredictionDetailView(generics.RetrieveAPIView):
-    queryset = Prediction.objects.all()
-    serializer_class = PredictionSerializer
-
-class GroupListView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = UserGroupSerializer
-
-    def get_queryset(self):
-        return UserGroup.objects.all()#filter(members=self.request.user)
-
 class PredictionCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
@@ -71,3 +61,33 @@ class PredictionCreateView(generics.ListCreateAPIView):
     
     def perform_create(self, serializer):
         serializer.save()
+class PredictionUpdateView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PredictionUpdateSerializer
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+
+        if not instance.user_group.members.filter(id=self.request.user.id).exists():
+            raise ValidationError("You are not a member of the user group associated with this prediction.")
+        if instance.fixture.status != 'NS':
+            raise ValidationError("You can only update predictions for unstarted fixtures.")
+        
+        serializer.save()
+        
+    def get_queryset(self):
+        return Prediction.objects.filter(user=self.request.user)
+
+class PredictionDetailView(generics.RetrieveAPIView):
+    serializer_class = PredictionUpdateSerializer
+
+    def get_queryset(self):
+        return Prediction.objects.filter(user=self.request.user)
+
+class GroupListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserGroupSerializer
+
+    def get_queryset(self):
+        return UserGroup.objects.filter(members=self.request.user)
+

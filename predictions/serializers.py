@@ -67,17 +67,19 @@ class FixtureSerializer(serializers.HyperlinkedModelSerializer):
                     return {
                         'predicted_home_score': prediction.predicted_home_score,
                         'predicted_away_score': prediction.predicted_away_score,
-                        'created_at': prediction.created_at
+                        'created_at': prediction.created_at,
+                        'id': prediction.id
                     }
+                   
         return None
     
     def get_url(self, obj):
-        user = self.context['request'].user
+        # user = self.context['request'].user
         access_code = self.context['request'].query_params.get('access_code')
 
         prediction = self.get_user_prediction(obj)
         if prediction:
-            return None  # User has already made a prediction
+            return reverse('prediction-detail', args=[prediction['id']], request=self.context['request']) + f"?access_code={access_code}"
         else:
             return reverse('prediction-create', request=self.context['request']) + f"?access_code={access_code}"
                         
@@ -151,8 +153,21 @@ class PredictionCreateSerializer(serializers.ModelSerializer):
         user_group = attrs['user_group']
         if not  user.user_groups.filter(id=user_group.id).exists():
             raise serializers.ValidationError("You are not a member of this group.")
-        if Prediction.objects.filter(user=user, fixture=fixture, user_group=attrs['user_group']).exists():
+        if Prediction.objects.filter(user=user, fixture=fixture, user_group=attrs['user_group']).exists() and self.instance is None:
             raise serializers.ValidationError("You have already made a prediction for this fixture in this group.")
         if fixture.status != 'NS':
             raise serializers.ValidationError("You can only predict matches with status 'NS' (Not Started).")
         return attrs
+    
+class PredictionUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for updating Prediction instances.
+    Only predicted scores can be updated.
+    """
+    predicted_home_score = serializers.IntegerField(min_value=0)
+    predicted_away_score = serializers.IntegerField(min_value=0)
+
+    class Meta:
+        model = Prediction
+        fields = ['id','fixture','user_group','predicted_home_score', 'predicted_away_score']
+        read_only_fields = ['id','fixture','user_group']

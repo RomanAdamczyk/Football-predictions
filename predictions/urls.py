@@ -1,5 +1,9 @@
 from django.urls import path
-from .views import LeagueListView, LeagueDetailView, SeasonDetailView, FixtureListView, FixtureDetailView, PredictionListView, PredictionDetailView, PredictionCreateView, GroupListView
+from .views import LeagueListView, LeagueDetailView
+from .views import SeasonDetailView 
+from .views import FixtureListView, FixtureDetailView
+from .views import PredictionListView, PredictionDetailView, PredictionCreateView, PredictionUpdateView
+from .views import GroupListView
 
 urlpatterns = [
     path('usergroups/', GroupListView.as_view(), name='usergroup-list'),
@@ -11,4 +15,6 @@ urlpatterns = [
     path('predictions/', PredictionListView.as_view(), name='prediction-list'),
     path('predictions/<int:pk>/', PredictionDetailView.as_view(), name='prediction-detail'),
     path('predictions/create/', PredictionCreateView.as_view(), name='prediction-create'),
+    path('predictions/<int:pk>/update/', PredictionUpdateView.as_view(), name='prediction-update'),
+
 ]
