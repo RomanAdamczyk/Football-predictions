@@ -177,5 +177,29 @@ class Prediction(models.Model):
             models.Index(fields=['user', 'user_group']),
         ]
 
+    def calculate_points(self):
+        """
+        Calculates points for the prediction based on the actual fixture result.
+        
+        Scoring System:
+            - Exact score prediction: 3
+            - Correct outcome (win/loss/draw) but wrong score: 1
+            - Incorrect outcome: 0
+        Updates the points_awarded attribute and saves the instance.
+        """
+        fixture = self.fixture
+        if fixture.home_score is not None and fixture.away_score is not None:
+            if (self.predicted_home_score == fixture.home_score and
+                self.predicted_away_score == fixture.away_score):
+                self.points_awarded = 3
+            elif ((self.predicted_home_score - self.predicted_away_score) *
+                  (fixture.home_score - fixture.away_score) > 0 or
+                  (self.predicted_home_score == self.predicted_away_score and
+                   fixture.home_score == fixture.away_score)):
+                self.points_awarded = 1
+            else:
+                self.points_awarded = 0
+            self.save()    
+
     def __str__(self):
         return f"{self.user.username}'s prediction: {self.predicted_home_score}-{self.predicted_away_score} for {self.fixture}"
