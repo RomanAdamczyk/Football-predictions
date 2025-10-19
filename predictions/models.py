@@ -168,7 +168,7 @@ class Prediction(models.Model):
     predicted_away_score = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     user_group = models.ForeignKey(UserGroup, on_delete=models.CASCADE, related_name='predictions')
-    points_awarded = models.IntegerField(default=0)
+    points_awarded = models.IntegerField(default=None, null=True, blank=True)
 
     class Meta:
         unique_together = ('user', 'user_group','fixture')

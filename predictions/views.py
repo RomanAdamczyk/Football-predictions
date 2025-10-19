@@ -1,7 +1,10 @@
 from rest_framework import generics
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from .models import League, Season, Fixture, Prediction, UserGroup
 from .serializers import LeagueSerializer, SeasonSerializer, FixtureSerializer, UserGroupSerializer
 from .serializers import PredictionSerializer, PredictionCreateSerializer, PredictionUpdateSerializer
+from .serializers import CalculatePointsSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
 class LeagueListView(generics.ListAPIView):
@@ -91,3 +94,20 @@ class GroupListView(generics.ListAPIView):
     def get_queryset(self):
         return UserGroup.objects.filter(members=self.request.user)
 
+class CalculatePointsView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+
+class CalculatePointsView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CalculatePointsSerializer
+
+    def post(self, request):
+        predictions = Prediction.objects.filter(points_awarded__isnull=True, fixture__status='FT')
+        predictions_list = []
+        for prediction in predictions:
+            fixture = prediction.fixture
+            prediction.calculate_points()
+            predictions_list.append(prediction)
+        Prediction.objects.bulk_update(predictions_list, ['points_awarded'])
+
+        return Response(status=204)

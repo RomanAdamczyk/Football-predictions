@@ -26,7 +26,7 @@ class FixtureAdmin(admin.ModelAdmin):
     list_filter = ['season', 'date', 'status']
 
 class PredictionAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user', 'fixture', 'predicted_home_score', 'predicted_away_score', 'created_at']
+    list_display = ['id', 'user', 'fixture', 'predicted_home_score', 'predicted_away_score','points_awarded' ,'created_at']
     search_fields = ['user__username', 'fixture__home_team__name', 'fixture__away_team__name']
     list_filter = ['created_at']
 

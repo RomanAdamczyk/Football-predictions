@@ -171,3 +171,15 @@ class PredictionUpdateSerializer(serializers.ModelSerializer):
         model = Prediction
         fields = ['id','fixture','user_group','predicted_home_score', 'predicted_away_score']
         read_only_fields = ['id','fixture','user_group']
+
+class CalculatePointsSerializer(serializers.ModelSerializer):
+    """
+    Serializer for calculating points for a user's predictions in a specific user group.
+    """
+    fixture_id = serializers.PrimaryKeyRelatedField(queryset=Fixture.objects.all(), required=False)
+    user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False)
+    group_id = serializers.PrimaryKeyRelatedField(queryset=UserGroup.objects.all(), required=False)
+    class Meta:
+        model = Prediction
+        fields = ['id','points_awarded','predicted_home_score', 'predicted_away_score']
+    
