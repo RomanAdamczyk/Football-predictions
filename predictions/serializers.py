@@ -96,7 +96,7 @@ class PredictionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Prediction
-        fields = ['id', 'user', 'fixture', 'predicted_home_score', 'predicted_away_score', 'created_at']
+        fields = ['id', 'user', 'fixture', 'predicted_home_score', 'predicted_away_score', 'created_at', "points_awarded"]
 
 class UserGroupSerializer(serializers.ModelSerializer):
     """
@@ -182,4 +182,13 @@ class CalculatePointsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prediction
         fields = ['id','points_awarded','predicted_home_score', 'predicted_away_score']
-    
+
+class UserRankingSerializer(serializers.ModelSerializer):
+    """
+    Serializer for user rankings within a group.
+    """
+    total_points = serializers.IntegerField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'total_points']

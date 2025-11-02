@@ -1,12 +1,13 @@
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import League, Season, Fixture, Prediction, UserGroup
+from .models import League, Season, Fixture, Prediction, UserGroup, User
 from .serializers import LeagueSerializer, SeasonSerializer, FixtureSerializer, UserGroupSerializer
 from .serializers import PredictionSerializer, PredictionCreateSerializer, PredictionUpdateSerializer
-from .serializers import CalculatePointsSerializer
+from .serializers import CalculatePointsSerializer, UserRankingSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
+from django.db import models
 class LeagueListView(generics.ListAPIView):
     queryset = League.objects.all()
     serializer_class = LeagueSerializer
@@ -39,7 +40,9 @@ class FixtureDetailView(generics.RetrieveAPIView):
 class PredictionListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PredictionSerializer
-        
+    
+    def get_queryset(self):
+        return Prediction.objects.filter(user=self.request.user)
 class PredictionCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
@@ -111,3 +114,21 @@ class CalculatePointsView(APIView):
         Prediction.objects.bulk_update(predictions_list, ['points_awarded'])
 
         return Response(status=204)
+    
+class UserRankingView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserRankingSerializer
+
+    def get_queryset(self):
+        access_code = self.request.query_params.get('access_code')
+        if not access_code:
+            raise ValidationError("Access code is required to view rankings.")
+        
+        user_group = UserGroup.objects.filter(
+            access_code=access_code, members=self.request.user).first()
+        if not user_group:
+            raise ValidationError("Invalid access code or you are not a member of this group.")
+        users = User.objects.filter(user_groups__id=user_group.id).annotate(total_points=models.Sum('predictions__points_awarded')).order_by('-total_points')
+        
+        
+        
