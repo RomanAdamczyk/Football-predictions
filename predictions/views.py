@@ -129,6 +129,6 @@ class UserRankingView(generics.ListAPIView):
         if not user_group:
             raise ValidationError("Invalid access code or you are not a member of this group.")
         users = User.objects.filter(user_groups__id=user_group.id).annotate(total_points=models.Sum('predictions__points_awarded')).order_by('-total_points')
-        
+        return users
         
         
