@@ -97,9 +97,6 @@ class GroupListView(generics.ListAPIView):
     def get_queryset(self):
         return UserGroup.objects.filter(members=self.request.user)
 
-class CalculatePointsView(generics.RetrieveAPIView):
-    permission_classes = [IsAuthenticated]
-
 class CalculatePointsView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = CalculatePointsSerializer
