@@ -2,6 +2,8 @@
 Requires:
     requests: For HTTP requests to API-Football.
     python-decouple: For loading API key from .env.
+Example:
+    python manage.py runscript fetch_fixtures.
 """
 
 

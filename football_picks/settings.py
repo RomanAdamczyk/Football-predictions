@@ -61,6 +61,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+TEST_RUNNER = 'pytest_django.runner.DjangoRunner'
+
 ROOT_URLCONF = 'football_picks.urls'
 
 TEMPLATES = [
