@@ -1,22 +1,25 @@
 from django.urls import path
-from .views import LeagueListView, LeagueDetailView
-from .views import SeasonDetailView 
-from .views import FixtureListView, FixtureDetailView
-from .views import PredictionListView, PredictionDetailView, PredictionCreateView, PredictionUpdateView
-from .views import GroupListView, CalculatePointsView, UserRankingView
+from .views.api import LeagueListView, LeagueDetailView
+from .views.api import SeasonDetailView 
+from .views.api import FixtureListView, FixtureDetailView
+from .views.api import PredictionListView, PredictionDetailView, PredictionCreateView, PredictionUpdateView
+from .views.api import GroupListView, CalculatePointsView, UserRankingView
+from .views.htmx import fixtures_partial, prediction_create_partial
 
 urlpatterns = [
-    path('usergroups/', GroupListView.as_view(), name='usergroup-list'),
-    path('leagues/', LeagueListView.as_view(), name='league-list'),
-    path('leagues/<int:pk>/', LeagueDetailView.as_view(), name='league-detail'),
-    path('seasons/<int:pk>/', SeasonDetailView.as_view(), name='season-detail'),
-    path('fixtures/', FixtureListView.as_view(), name='fixture-list'),
-    path('fixtures/<int:pk>/', FixtureDetailView.as_view(), name='fixture-detail'),
-    path('predictions/', PredictionListView.as_view(), name='prediction-list'),
-    path('predictions/<int:pk>/', PredictionDetailView.as_view(), name='prediction-detail'),
-    path('predictions/create/', PredictionCreateView.as_view(), name='prediction-create'),
-    path('predictions/<int:pk>/update/', PredictionUpdateView.as_view(), name='prediction-update'),
-    path('predictions/calculate_points/', CalculatePointsView.as_view(), name='prediction-calculate-points'),
-    path('user_rankings/', UserRankingView.as_view(), name='user-ranking-list'),
+    path('partial/fixtures/', fixtures_partial, name='htmx-fixtures'),
+    path('partial/predictions/create/', prediction_create_partial, name='htmx-prediction-create'),
+    path('api/usergroups/', GroupListView.as_view(), name='usergroup-list'),
+    path('api/leagues/', LeagueListView.as_view(), name='league-list'),
+    path('api/leagues/<int:pk>/', LeagueDetailView.as_view(), name='league-detail'),
+    path('api/seasons/<int:pk>/', SeasonDetailView.as_view(), name='season-detail'),
+    path('api/fixtures/', FixtureListView.as_view(), name='fixture-list'),
+    path('api/fixtures/<int:pk>/', FixtureDetailView.as_view(), name='fixture-detail'),
+    path('api/predictions/', PredictionListView.as_view(), name='prediction-list'),
+    path('api/predictions/<int:pk>/', PredictionDetailView.as_view(), name='prediction-detail'),
+    path('api/predictions/create/', PredictionCreateView.as_view(), name='prediction-create'),
+    path('api/predictions/<int:pk>/update/', PredictionUpdateView.as_view(), name='prediction-update'),
+    path('api/predictions/calculate_points/', CalculatePointsView.as_view(), name='prediction-calculate-points'),
+    path('api/user_rankings/', UserRankingView.as_view(), name='user-ranking-list'),
 
 ]

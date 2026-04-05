@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'predictions.apps.PredictionsConfig',
     'rest_framework',
+    'django_htmx',
     'rest_framework.authtoken',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -59,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_htmx.middleware.HtmxMiddleware',
 ]
 
 TEST_RUNNER = 'pytest_django.runner.DjangoRunner'

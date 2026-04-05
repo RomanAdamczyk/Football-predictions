@@ -133,4 +133,4 @@ def run():
     # today = datetime.now().strftime('%Y-%m-%d')
     # start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')  
     # end_date = (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d')    
-    save_fixtures_to_db(league_id=106, season_year=2023, start_date="2023-09-01", end_date="2023-09-30", split_date="2023-09-20")
+    save_fixtures_to_db(league_id=106, season_year=2023, start_date="2023-10-01", end_date="2023-10-31", split_date="2023-10-02")

@@ -1,13 +1,14 @@
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import League, Season, Fixture, Prediction, UserGroup, User
-from .serializers import LeagueSerializer, SeasonSerializer, FixtureSerializer, UserGroupSerializer
-from .serializers import PredictionSerializer, PredictionCreateSerializer, PredictionUpdateSerializer
-from .serializers import CalculatePointsSerializer, UserRankingSerializer
+from ..models import League, Season, Fixture, Prediction, UserGroup, User
+from ..serializers import LeagueSerializer, SeasonSerializer, FixtureSerializer, UserGroupSerializer
+from ..serializers import PredictionSerializer, PredictionCreateSerializer, PredictionUpdateSerializer
+from ..serializers import CalculatePointsSerializer, UserRankingSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
 from django.db import models
+
 class LeagueListView(generics.ListAPIView):
     queryset = League.objects.all()
     serializer_class = LeagueSerializer
