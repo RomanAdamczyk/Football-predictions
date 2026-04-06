@@ -1,18 +1,18 @@
 <h2>Mecze do typowania</h2>
 
 {% for fixture in fixtures %}
-<div id="match-{{ fixture.id }}" style="border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
+<div id="match-{{ fixture.id }}"
+    style="border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
 
     <div style="margin-bottom: 10px;">
-        <strong>{{ fixture.home_team.name|default:fixture.home_team }} — {{ fixture.away_team.name|default:fixture.away_team }}</strong><br>
-        <small>{{ fixture.date|date:"d.m.Y H:i" }}</small>
+        <strong>{{ fixture.home_team.name|default:fixture.home_team }} — 
+            {{ fixture.away_team.name|default:fixture.away_team }}</strong><br>
+        <small>Data: {{ fixture.formatted_date }}</small><br>
+        <small>Kolejka: {{ fixture.round|default:"—" }}</small>
     </div>
 
     <!-- Prosty formularz typowania -->
-    <form 
-        hx-post="{% url 'htmx-prediction-create' %}" 
-        hx-target="#match-{{ fixture.id }}" 
-        hx-swap="outerHTML"
+    <form hx-post="{% url 'htmx-prediction-create' %}" hx-target="#match-{{ fixture.id }}" hx-swap="outerHTML"
         style="display: flex; align-items: center; gap: 10px;">
 
         <input type="hidden" name="fixture" value="{{ fixture.id }}">
@@ -20,28 +20,15 @@
         <!-- Jeśli masz user_group w kontekście, odkomentuj -->
         <!-- <input type="hidden" name="user_group" value="{{ user_group.id }}"> -->
 
-        <input 
-            type="number" 
-            name="predicted_home_score" 
-            min="0" 
-            max="9" 
-            required
-            style="width: 60px; text-align: center; padding: 6px;" 
-            placeholder="0">
+        <input type="number" name="predicted_home_score" min="0" max="9" required
+            style="width: 60px; text-align: center; padding: 6px;" placeholder="0">
 
         <span style="font-size: 1.2em;">:</span>
 
-        <input 
-            type="number" 
-            name="predicted_away_score" 
-            min="0" 
-            max="9" 
-            required
-            style="width: 60px; text-align: center; padding: 6px;" 
-            placeholder="0">
+        <input type="number" name="predicted_away_score" min="0" max="9" required
+            style="width: 60px; text-align: center; padding: 6px;" placeholder="0">
 
-        <button 
-            type="submit"
+        <button type="submit"
             style="padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
             Zapisz typ
         </button>

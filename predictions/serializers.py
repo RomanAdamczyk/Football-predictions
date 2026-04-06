@@ -55,6 +55,7 @@ class FixtureSerializer(serializers.HyperlinkedModelSerializer):
     away_team = serializers.StringRelatedField(source='away_team.name', read_only=True)
     user_prediction = serializers.SerializerMethodField()
     url = serializers.SerializerMethodField()
+    formatted_date = serializers.SerializerMethodField()
 
     def get_user_prediction(self, obj):
         user = self.context['request'].user
@@ -82,10 +83,15 @@ class FixtureSerializer(serializers.HyperlinkedModelSerializer):
             return reverse('prediction-detail', args=[prediction['id']], request=self.context['request']) + f"?access_code={access_code}"
         else:
             return reverse('prediction-create', request=self.context['request']) + f"?access_code={access_code}"
-                        
+
+    def get_formatted_date(self, obj):
+            """Returns the date in a readable format for templates"""
+            if obj.date:
+                return obj.date.strftime("%d.%m.%Y %H:%M")
+            return None     
     class Meta:
         model = Fixture
-        fields = ['url','season', 'date', 'home_team', 'away_team', 'home_score', 'away_score', 'status', 'round','round_name','api_id', 'user_prediction']
+        fields = ['url','season','formatted_date', 'home_team', 'away_team', 'home_score', 'away_score', 'status', 'round','round_name','api_id', 'user_prediction']
 
 class PredictionSerializer(serializers.ModelSerializer):
     """
