@@ -49,7 +49,7 @@ class FixtureSerializer(serializers.HyperlinkedModelSerializer):
     Serializer for the Fixture model, including season details.
     Also includes user-specific prediction data if available.
     """
-
+    # id = serializers.IntegerField(read_only=True)
     season = SeasonSerializer(read_only=True)
     home_team = serializers.StringRelatedField(source='home_team.name', read_only=True)
     away_team = serializers.StringRelatedField(source='away_team.name', read_only=True)
@@ -58,8 +58,15 @@ class FixtureSerializer(serializers.HyperlinkedModelSerializer):
     formatted_date = serializers.SerializerMethodField()
 
     def get_user_prediction(self, obj):
-        user = self.context['request'].user
-        access_code = self.context['request'].query_params.get('access_code')
+        try:
+            user = self.context['request'].user
+        except (KeyError, AttributeError):
+            return None
+        
+        access_code = self.context.get('access_code')
+        if not access_code:
+            access_code = self.context['request'].GET.get('access_code')
+
         if access_code:
             user_group = UserGroup.objects.filter(access_code=access_code, members=user).first()
             if user_group:
@@ -71,27 +78,36 @@ class FixtureSerializer(serializers.HyperlinkedModelSerializer):
                         'created_at': prediction.created_at,
                         'id': prediction.id
                     }
-                   
-        return None
     
     def get_url(self, obj):
-        # user = self.context['request'].user
-        access_code = self.context['request'].query_params.get('access_code')
+        try:
+            req = self.context['request']
+            
+            # Bezpieczne pobieranie access_code
+            access_code = None
+            if hasattr(req, 'query_params'):
+                access_code = req.query_params.get('access_code')
+            elif hasattr(req, 'GET'):
+                access_code = req.GET.get('access_code')
 
-        prediction = self.get_user_prediction(obj)
-        if prediction:
-            return reverse('prediction-detail', args=[prediction['id']], request=self.context['request']) + f"?access_code={access_code}"
-        else:
-            return reverse('prediction-create', request=self.context['request']) + f"?access_code={access_code}"
+            if access_code:
+                return reverse('prediction-detail', args=[obj.id], request=req) + f"?access_code={access_code}"
+            else:
+                return reverse('prediction-detail', args=[obj.id], request=req)
+                
+        except Exception:
+            # Fallback jeśli coś pójdzie nie tak
+            return "#"
 
     def get_formatted_date(self, obj):
             """Returns the date in a readable format for templates"""
             if obj.date:
                 return obj.date.strftime("%d.%m.%Y %H:%M")
-            return None     
+            return None
+         
     class Meta:
         model = Fixture
-        fields = ['url','season','formatted_date', 'home_team', 'away_team', 'home_score', 'away_score', 'status', 'round','round_name','api_id', 'user_prediction']
+        fields = ['id','url','season','formatted_date', 'home_team', 'away_team', 'home_score', 'away_score', 'status', 'round','round_name','api_id', 'user_prediction']
 
 class PredictionSerializer(serializers.ModelSerializer):
     """
@@ -149,22 +165,67 @@ class PredictionCreateSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'user_group','fixture', 'predicted_home_score', 'predicted_away_score', 'created_at']
         read_only_fields = ['id','user','created_at']
 
+    def validate_unique(self, attrs):
+        """
+        Pomijamy sprawdzanie unique_together przy aktualizacji istniejącego rekordu.
+        """
+        
+        print("=== VALIDATE UNIQUE CALLED ===")
+        if self.instance is not None:
+            return
+
+        super().validate_unique(attrs)
+    
     def validate(self, attrs):
-        """
-        Ensure user can only predict once per fixture in the group and belongs to the group
-        and predict only match with status NS.
-        """
+        """Basic validation for both create and update operations."""
         user = self.context['request'].user
         fixture = attrs['fixture']
         user_group = attrs['user_group']
-        if not  user.user_groups.filter(id=user_group.id).exists():
+
+        print("=== VALIDATE PREDICTION ===")
+        if not user.user_groups.filter(id=user_group.id).exists():
             raise serializers.ValidationError("You are not a member of this group.")
-        if Prediction.objects.filter(user=user, fixture=fixture, user_group=attrs['user_group']).exists() and self.instance is None:
-            raise serializers.ValidationError("You have already made a prediction for this fixture in this group.")
+
+        print(f"Validating prediction for user: {user.username}, fixture: {fixture.id}, group: {user_group.name}")
         if fixture.status != 'NS':
             raise serializers.ValidationError("You can only predict matches with status 'NS' (Not Started).")
+
+        existing = Prediction.objects.filter(user=user, fixture=fixture, user_group=user_group).first()
+        attrs['_existing_prediction'] = existing
+
+        if existing and self.instance is None:
+            raise serializers.ValidationError("You have already made a prediction for this fixture in this group.")
+
         return attrs
     
+    def create(self, validated_data):
+        """Create or update prediction (upsert logic)."""
+
+        user = self.context['request'].user
+        fixture = validated_data['fixture']
+        user_group = validated_data['user_group']
+        predicted_home_score = validated_data['predicted_home_score']
+        predicted_away_score = validated_data['predicted_away_score']
+
+        print("=== CREATE METHOD CALLED ===")
+        print("User:", user)
+        print("Fixture:", fixture.id)
+        print("User Group:", user_group.id)
+
+        # update_or_create - to jest sedno
+        prediction, created = Prediction.objects.update_or_create(
+            user=user,
+            fixture=fixture,
+            user_group=user_group,
+            defaults={
+                'predicted_home_score': predicted_home_score,
+                'predicted_away_score': predicted_away_score,
+            }
+        )
+
+        print("Prediction saved. Created new:", created)
+        return prediction    
+
 class PredictionUpdateSerializer(serializers.ModelSerializer):
     """
     Serializer for updating Prediction instances.
@@ -175,9 +236,77 @@ class PredictionUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Prediction
-        fields = ['id','fixture','user_group','predicted_home_score', 'predicted_away_score']
-        read_only_fields = ['id','fixture','user_group']
+        fields = ['user', 'fixture', 'user_group', 'predicted_home_score', 'predicted_away_score']
 
+class PredictionUpsertSerializer(serializers.ModelSerializer):
+    """The serializer is responsible for saving (creating or updating) predictions.
+    It accepts data from an HTMX form and decides whether to create a new entry or update an existing one."""
+
+    predicted_home_score = serializers.IntegerField(min_value=0, max_value=99)
+    predicted_away_score = serializers.IntegerField(min_value=0, max_value=99)
+
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    fixture = serializers.PrimaryKeyRelatedField(queryset=Fixture.objects.all())
+    user_group = serializers.PrimaryKeyRelatedField(queryset=UserGroup.objects.none())
+    class Meta:
+        model = Prediction
+        fields = ['user', 'fixture', 'user_group', 'predicted_home_score', 'predicted_away_score']
+
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        if 'request' in self.context:
+            user = self.context['request'].user
+            self.fields['user_group'].queryset = UserGroup.objects.filter(members=user)
+
+    def validate(self, attrs):
+        print("=== VALIDATE CALLED IN UPSERT SERIALIZER ===")
+        user = self.context['request'].user
+        fixture = attrs['fixture']
+        user_group = attrs['user_group']
+
+        if not user.user_groups.filter(id=user_group.id).exists():
+            raise serializers.ValidationError("You are not a member of this group.")
+
+        if fixture.season != user_group.season:
+            raise serializers.ValidationError("This fixture does not belong to the selected group's season.")
+
+        if fixture.status != 'NS':
+            raise serializers.ValidationError("You can only predict matches with status 'NS' (Not Started).")
+
+        return attrs
+
+    def validate_unique(self, attrs):
+        """Wyłączamy sprawdzanie unique_together przy aktualizacji."""
+        print("=== VALIDATE UNIQUE CALLED IN UPSERT SERIALIZER ===")
+        if self.instance is not None:
+            # Jeśli aktualizujemy istniejący rekord - pomijamy sprawdzanie unikalności
+            return
+        # Przy tworzeniu nowego - zostawiamy normalne sprawdzanie
+        super().validate_unique(attrs)
+
+    def create(self, validated_data):
+        """Create or update (upsert) prediction"""
+        print("=== CREATE CALLED IN UPSERT SERIALIZER ===")
+        user = validated_data['user']
+        fixture = validated_data['fixture']
+        user_group = validated_data['user_group']
+        home_score = validated_data['predicted_home_score']
+        away_score = validated_data['predicted_away_score']
+
+        # update_or_create - jedyne miejsce z bezpośrednim odwołaniem do bazy
+        prediction, created = Prediction.objects.update_or_create(
+            user=user,
+            fixture=fixture,
+            user_group=user_group,
+            defaults={
+                'predicted_home_score': home_score,
+                'predicted_away_score': away_score,
+            }
+        )
+
+        return prediction, created
 class CalculatePointsSerializer(serializers.ModelSerializer):
     """
     Serializer for calculating points for a user's predictions in a specific user group.
@@ -198,3 +327,5 @@ class UserRankingSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'total_points']
+
+

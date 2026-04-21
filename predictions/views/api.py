@@ -1,9 +1,10 @@
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from urllib3 import request
 from ..models import League, Season, Fixture, Prediction, UserGroup, User
 from ..serializers import LeagueSerializer, SeasonSerializer, FixtureSerializer, UserGroupSerializer
-from ..serializers import PredictionSerializer, PredictionCreateSerializer, PredictionUpdateSerializer
+from ..serializers import PredictionSerializer, PredictionCreateSerializer, PredictionUpdateSerializer, PredictionUpsertSerializer
 from ..serializers import CalculatePointsSerializer, UserRankingSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
@@ -129,4 +130,30 @@ class UserRankingView(generics.ListAPIView):
         users = User.objects.filter(user_groups__id=user_group.id).annotate(total_points=models.Sum('predictions__points_awarded')).order_by('-total_points')
         return users
         
-        
+def upsert_prediction(request):
+    """
+    Backendowa funkcja odpowiedzialna za upsert predykcji.
+    Cała logika dostępu do bazy jest tutaj.
+    """
+    if request.method != 'POST':
+        return None, False
+
+    fixture_id = request.POST.get('fixture')
+    user_group_id = request.POST.get('user_group')
+    home_score = request.POST.get('predicted_home_score')
+    away_score = request.POST.get('predicted_away_score')
+
+    if not fixture_id or not user_group_id:
+        return None, False
+
+    prediction, created = Prediction.objects.update_or_create(
+        user=request.user,
+        fixture_id=fixture_id,
+        user_group_id=user_group_id,
+        defaults={
+            'predicted_home_score': home_score,
+            'predicted_away_score': away_score,
+        }
+    )
+
+    return prediction, created
