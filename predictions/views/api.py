@@ -28,12 +28,22 @@ class FixtureListView(generics.ListAPIView):
     
     def get_queryset(self):
         access_code = self.request.query_params.get('access_code')
+        round_param = self.request.query_params.get('round')
+        print(f"Round: '{round_param}' (type: {type(round_param)})")
+
         if access_code:
+            print(f"Round: {round_param}")
             user_group = UserGroup.objects.filter(
                 access_code=access_code, members=self.request.user).first()
             if user_group and user_group.season:
-                return Fixture.objects.filter(season=user_group.season, status='NS').select_related('season', 'season__league')
-        return None
+                base = Fixture.objects.filter(season=user_group.season, status='NS')
+                if round_param and round_param.isdigit():
+                    round_num = int(round_param)
+                    print(f"Filtering by round: {round_num}")
+                    base = base.filter(round=round_num)
+                else:
+                    print("Round invalid, showing all")
+                return base
 
 class FixtureDetailView(generics.RetrieveAPIView):
     queryset = Fixture.objects.all()

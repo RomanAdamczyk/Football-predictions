@@ -3,11 +3,13 @@
 {% block title %}Test HTMX{% endblock %}
 
 {% block content %}
-
 <h1>Typowanie wyników meczy</h1>
 
-<div id="fixtures-container" hx-get="{% url 'htmx-fixtures' %}?access_code=1" hx-trigger="load" hx-swap="innerHTML">
-    <p>Ładowanie meczów...</p>
+<!-- JEDEN kontener - wszystko! -->
+<div id="fixtures-container" 
+     hx-get="{% url 'htmx-fixtures' %}?access_code=1" 
+     hx-trigger="load"
+     hx-swap="outerHTML">
+  <p>Ładowanie...</p>
 </div>
-
 {% endblock %}
