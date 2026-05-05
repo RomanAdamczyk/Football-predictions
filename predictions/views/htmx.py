@@ -81,28 +81,13 @@ def fixtures_partial(request):
     
     all_request = Request(request, parsers=drf_request.parsers)
     all_request.user = request.user
-    all_request.GET = params  # Django GET!
-    
-    # temp_params = drf_request.query_params.copy()
-    # temp_params.pop('round', None)
-    
-    # temp_request = Request(request)
-    # temp_request.user = request.user
-    # temp_request.query_params = temp_params  # Nowa kopia
-
+    all_request.GET = params
     
     drf_view_all = FixtureListView()
-    # drf_view_all.request = temp_request
     drf_view_all.request = all_request
     all_fixtures = drf_view_all.get_queryset()
     rounds = all_fixtures.values('round').distinct().order_by('round') if all_fixtures else []
 
-
-    # drf_view.request.query_params = drf_request.query_params.copy()
-    # drf_view.request.query_params.pop('round', None)  # Usuń filtr round
-    # all_fixtures = drf_view.get_queryset()
-    # rounds = all_fixtures.values('round').distinct().order_by('round') if all_fixtures else []
-    
     serializer = FixtureSerializer(fixtures, many=True, context={'request': drf_request, 'user_group': user_group})
     
     context = {
@@ -116,10 +101,9 @@ def fixtures_partial(request):
     print(f"TEMPLATE CONTEXT: rounds={len(rounds)}, fixtures={len(serializer.data)}, selected={request.GET.get('round')}")
 
     if request.htmx:
-        html = render_to_string('partials/fixtures_list.html', context, request=request)
+        html = render_to_string('partials/fixtures_results_only.html', context, request=request)
         print(f"HTML length: {len(html)}")
         return HttpResponse(html)
-        # return render(request, 'partials/fixtures_list.html', context)
     return render(request, 'predictions/test_fixtures.html', context)
 
 @login_required

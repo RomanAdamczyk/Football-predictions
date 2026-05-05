@@ -1,5 +1,4 @@
 <div id="liters_section">
-<!-- SELECT KOLEJEK -->
 <select id="matchday" name="round"
         hx-get="{% url 'htmx-fixtures' %}?access_code={{ access_code }}"
         hx-trigger="change"
@@ -15,70 +14,6 @@
 </div>
 
 <div id="fixtures-list">
-    {% for fixture in fixtures %}
-    <div id="match-{{ fixture.id }}"
-        style="border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
-        {% if just_saved %}
-            <div
-        style="color: green; font-weight: bold; padding: 10px; margin-bottom: 10px; border: 1px solid green; border-radius: 5px;">
-        {% if was_created %}
-        ✓ Nowy typ został zapisany pomyślnie!
-        {% else %}
-        ✓ Typ został zaktualizowany pomyślnie!
-        {% endif %}
-    </div>
+    {% include "partials/fixtures_results_only.html" %}
+</div>
 
-        {% endif %}
-
-        <div style="margin-bottom: 10px;">
-            <strong>{{ fixture.home_team.name|default:fixture.home_team }} — 
-                {{ fixture.away_team.name|default:fixture.away_team }}</strong><br>
-            <small>Data: {{ fixture.formatted_date }}</small><br>
-            <small>Kolejka: {{ fixture.round|default:"—" }}</small>
-        </div>
-
-    <form hx-post="{% url 'htmx-prediction-create' %}"
-        hx-target="#match-{{ fixture.id }}"
-        hx-swap="outerHTML"
-        style="display: flex; align-items: center; gap: 10px;">
-        {% csrf_token %}
-
-        <input type="hidden" name="fixture" value="{{ fixture.id }}">
-
-        <input type="hidden" name="user_group" value="{{ user_group.id }}">
-
-        {% if just_saved %}
-        <input type="number" name="predicted_home_score" min="0" max="99" required
-            value="{{ current_prediction.predicted_home_score|default:'' }}"
-            style="width: 60px; text-align: center; padding: 6px;" placeholder="0">
-
-        <span style="font-size: 1.2em;">:</span>
-
-        <input type="number" name="predicted_away_score" min="0" max="99" required
-            value="{{ current_prediction.predicted_away_score|default:'' }}"
-            style="width: 60px; text-align: center; padding: 6px;" placeholder="0">
-
-
-        {% else %}
-        <input type="number" name="predicted_home_score" min="0" max="99" required
-            value="{{ fixture.user_prediction.predicted_home_score|default:'' }}"
-            style="width: 60px; text-align: center; padding: 6px;" placeholder="0">
-
-        <span style="font-size: 1.2em;">:</span>
-
-        <input type="number" name="predicted_away_score" min="0" max="99" required
-            value="{{ fixture.user_prediction.predicted_away_score|default:'' }}"
-            style="width: 60px; text-align: center; padding: 6px;" placeholder="0">
-        {% endif %}
-        <button type="submit"
-            style="padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-            {% if fixture.user_prediction %}Popraw typ{% else %}Zapisz typ{% endif %}
-        </button>
-    </form>
-    </div>
-
-{% empty %}
-<p>Brak meczów do typowania w tej kolejce.</p>
-{% endfor %}
-
-</div>  

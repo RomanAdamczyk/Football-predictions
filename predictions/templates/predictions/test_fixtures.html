@@ -6,10 +6,8 @@
 <h1>Typowanie wyników meczy</h1>
 
 <!-- JEDEN kontener - wszystko! -->
-<div id="fixtures-container" 
-     hx-get="{% url 'htmx-fixtures' %}?access_code=1" 
-     hx-trigger="load"
-     hx-swap="outerHTML">
+<div id="main-container">
+    {% include "partials/fixtures_list.html" %}
   <p>Ładowanie...</p>
 </div>
 {% endblock %}
