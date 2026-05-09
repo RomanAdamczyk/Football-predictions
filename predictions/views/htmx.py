@@ -65,6 +65,7 @@ def fixtures_partial(request):
     drf_request.user = request.user 
     
     drf_view = FixtureListView()
+
     drf_view.request = drf_request
     access_code = request.GET.get('access_code')
     user_group = UserGroup.objects.filter(
@@ -89,7 +90,7 @@ def fixtures_partial(request):
     rounds = all_fixtures.values('round').distinct().order_by('round') if all_fixtures else []
 
     serializer = FixtureSerializer(fixtures, many=True, context={'request': drf_request, 'user_group': user_group})
-    
+
     context = {
         'fixtures': serializer.data,
         'user_group': user_group,
@@ -97,12 +98,9 @@ def fixtures_partial(request):
         'selected_round': request.GET.get('round', ''),
         'access_code': access_code
     }
-    
-    print(f"TEMPLATE CONTEXT: rounds={len(rounds)}, fixtures={len(serializer.data)}, selected={request.GET.get('round')}")
 
     if request.htmx:
         html = render_to_string('partials/fixtures_results_only.html', context, request=request)
-        print(f"HTML length: {len(html)}")
         return HttpResponse(html)
     return render(request, 'predictions/test_fixtures.html', context)
 
@@ -117,8 +115,6 @@ def prediction_create_partial(request):
     
     if prediction:
         access_code = request.GET.get('access_code') or request.POST.get('access_code')
-
-        print(f"Prediction upserted: {prediction.id}, created: {created}")
         
         context = {
             'fixtures': [prediction.fixture],
@@ -127,7 +123,7 @@ def prediction_create_partial(request):
             'just_saved': True,
             'was_created': created
         }
-        html = render_to_string('partials/fixtures_list.html', context, request=request)
+        html = render_to_string('partials/fixtures_results_only.html', context, request=request)
         return HttpResponse(html)
     else:
         html = "<div style='color: red; font-weight: bold; padding: 10px;'>✗ Błąd zapisu.</div>"
@@ -136,23 +132,17 @@ def prediction_create_partial(request):
 @login_required
 def matchdays_partial(request):
     """HTMX view returning matchdays for a given season and league."""
-    print("=== FIXTURES_PARTIAL START ===")
-    access_code = request.GET.get('access_code', '1')
-    round_param = request.GET.get('round')
-    print(f"Fixtures: access_code={access_code}, round={round_param}")
-    
+   
     drf_request = Request(request)
     drf_request.user = request.user
     drf_view = FixtureListView()
     drf_view.request = drf_request
     
     fixtures = drf_view.get_queryset()
-    print(f"Fixtures count: {fixtures.count() if fixtures else 'NONE'}")
     
     if fixtures is None:
         return HttpResponse("")  # PUSTY!
     
     serializer = FixtureSerializer(fixtures, many=True, context={'request': drf_request})
-    print(f"Serialized: {len(serializer.data)} items")
-    
+
     return render(request, 'partials/fixtures_list.html', {'fixtures': serializer.data})

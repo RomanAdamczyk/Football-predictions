@@ -1,19 +1,23 @@
+
 <div id="liters_section">
-<select id="matchday" name="round"
-        hx-get="{% url 'htmx-fixtures' %}?access_code={{ access_code }}"
-        hx-trigger="change"
-        hx-target="#fixtures-list"
-        hx-swap="innerHTML">
+  <select id="matchday" name="round"
+          hx-get="{% url 'htmx-fixtures' %}?access_code={{ access_code }}"
+          hx-trigger="change"
+          hx-target="#fixtures-list"
+          hx-swap="innerHTML">
     <option value="">Wszystkie</option>
     {% for r in rounds %}
-    <option value="{{ r.round }}" {% if selected_round == r.round|stringformat:"s" %}selected{% endif %}>
+      <option value="{{ r.round }}" {% if selected_round == r.round|stringformat:"s" %}selected{% endif %}>
         {{ r.round }}. kolejka
-    </option>
+      </option>
     {% endfor %}
-</select>
+  </select>
 </div>
 
-<div id="fixtures-list">
-    {% include "partials/fixtures_results_only.html" %}
+<div id="fixtures-list"
+     hx-get="{% url 'htmx-fixtures' %}?access_code={{ access_code }}"
+     hx-trigger="load"
+     hx-swap="innerHTML">
+  Ładowanie...
 </div>
-
+<div id="fixtures-list"></div>

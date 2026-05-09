@@ -169,8 +169,7 @@ class PredictionCreateSerializer(serializers.ModelSerializer):
         """
         Pomijamy sprawdzanie unique_together przy aktualizacji istniejącego rekordu.
         """
-        
-        print("=== VALIDATE UNIQUE CALLED ===")
+
         if self.instance is not None:
             return
 
@@ -182,11 +181,9 @@ class PredictionCreateSerializer(serializers.ModelSerializer):
         fixture = attrs['fixture']
         user_group = attrs['user_group']
 
-        print("=== VALIDATE PREDICTION ===")
         if not user.user_groups.filter(id=user_group.id).exists():
             raise serializers.ValidationError("You are not a member of this group.")
 
-        print(f"Validating prediction for user: {user.username}, fixture: {fixture.id}, group: {user_group.name}")
         if fixture.status != 'NS':
             raise serializers.ValidationError("You can only predict matches with status 'NS' (Not Started).")
 
@@ -207,12 +204,7 @@ class PredictionCreateSerializer(serializers.ModelSerializer):
         predicted_home_score = validated_data['predicted_home_score']
         predicted_away_score = validated_data['predicted_away_score']
 
-        print("=== CREATE METHOD CALLED ===")
-        print("User:", user)
-        print("Fixture:", fixture.id)
-        print("User Group:", user_group.id)
 
-        # update_or_create - to jest sedno
         prediction, created = Prediction.objects.update_or_create(
             user=user,
             fixture=fixture,
@@ -223,7 +215,6 @@ class PredictionCreateSerializer(serializers.ModelSerializer):
             }
         )
 
-        print("Prediction saved. Created new:", created)
         return prediction    
 
 class PredictionUpdateSerializer(serializers.ModelSerializer):
@@ -261,7 +252,6 @@ class PredictionUpsertSerializer(serializers.ModelSerializer):
             self.fields['user_group'].queryset = UserGroup.objects.filter(members=user)
 
     def validate(self, attrs):
-        print("=== VALIDATE CALLED IN UPSERT SERIALIZER ===")
         user = self.context['request'].user
         fixture = attrs['fixture']
         user_group = attrs['user_group']
@@ -279,16 +269,16 @@ class PredictionUpsertSerializer(serializers.ModelSerializer):
 
     def validate_unique(self, attrs):
         """Wyłączamy sprawdzanie unique_together przy aktualizacji."""
-        print("=== VALIDATE UNIQUE CALLED IN UPSERT SERIALIZER ===")
+
         if self.instance is not None:
-            # Jeśli aktualizujemy istniejący rekord - pomijamy sprawdzanie unikalności
+
             return
-        # Przy tworzeniu nowego - zostawiamy normalne sprawdzanie
+
         super().validate_unique(attrs)
 
     def create(self, validated_data):
         """Create or update (upsert) prediction"""
-        print("=== CREATE CALLED IN UPSERT SERIALIZER ===")
+
         user = validated_data['user']
         fixture = validated_data['fixture']
         user_group = validated_data['user_group']

@@ -33,7 +33,7 @@ def fetch_and_save_seasons_from_api():
     response = requests.get(f"{API_URL}/leagues/seasons", headers=headers)
 
     if response.status_code != 200:
-        print(f"Error fetching seasons: {response.status_code} - {response.text}")
+
         return 0
 
     seasons = response.json().get('response')
@@ -68,7 +68,6 @@ def fetch_and_save_teams_from_api(league_id, season_year):
     params = {'league': league_id, 'season': season_year}
     response = requests.get(f"{API_URL}/teams", headers=headers, params=params)
     if response.status_code != 200:
-        print(f"Error fetching teams for league {league_id}, season {season_year}: {response.status_code} - {response.text}")
         return 0
     
     teams = response.json().get('response', [])
@@ -76,7 +75,6 @@ def fetch_and_save_teams_from_api(league_id, season_year):
     try:
         season = Season.objects.get(league__api_id=league_id, start_year=season_year)
     except Season.DoesNotExist:
-        print(f'Season {season_year} for league ID {league_id} does not exist.')
         return 0
 
     count = 0
@@ -110,7 +108,7 @@ def fetch_and_save_fixtures_from_api(league_id, season_year, start_date, end_dat
         int: The number of fixtures added to the database.
     """
     if season_year not in [2021, 2022, 2023]:
-        print("Season year must be one of [2021, 2022, 2023].")
+
         return 0    #in main app it will be deleted
     
     headers = {'x-apisports-key': API_KEY}
@@ -118,7 +116,6 @@ def fetch_and_save_fixtures_from_api(league_id, season_year, start_date, end_dat
     response = requests.get(f"{API_URL}/fixtures", headers=headers, params=params)
     
     if response.status_code != 200:
-        print(f"Error fetching fixtures for league {league_id}, season {season_year}: {response.status_code} - {response.text}")
         return 0
     
     fixtures = response.json().get('response', [])
@@ -126,7 +123,6 @@ def fetch_and_save_fixtures_from_api(league_id, season_year, start_date, end_dat
     try:
         season = Season.objects.get(league__api_id=league_id, start_year=season_year)
     except Season.DoesNotExist:
-        print(f'Season {season_year} for league ID {league_id} does not exist.')
         return 0
     
     count = 0
@@ -142,12 +138,10 @@ def fetch_and_save_fixtures_from_api(league_id, season_year, start_date, end_dat
         try:        
             home_team = Team.objects.get(api_id=home_team_data.get('id'))
         except Team.DoesNotExist:
-            print(f"Home team with api_id {home_team_data.get('id')} does not exist in DB.")
             continue
         try:
             away_team = Team.objects.get(api_id=away_team_data.get('id'))
         except Team.DoesNotExist:
-            print(f"Away team with api_id {away_team_data.get('id')} does not exist in DB.")
             continue
         
         # status = fixture_data['status']['short'] it will be used in main app with payment plan
@@ -162,7 +156,6 @@ def fetch_and_save_fixtures_from_api(league_id, season_year, start_date, end_dat
                 home_score = goals_data.get('home')
                 away_score = goals_data.get('away')
         else:
-            print(f"Fixture date is missing in fixture with id = {fixture_data.get('id')}.")
             continue
         
         if league_data.get('round'):

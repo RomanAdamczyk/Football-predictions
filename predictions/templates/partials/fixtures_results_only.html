@@ -1,9 +1,8 @@
-
-    {% for fixture in fixtures %}
-    <div id="match-{{ fixture.id }}"
-        style="border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
-        {% if just_saved %}
-            <div
+{% for fixture in fixtures %}
+<div id="match-{{ fixture.id }}"
+    style="border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
+    {% if just_saved %}
+    <div
         style="color: green; font-weight: bold; padding: 10px; margin-bottom: 10px; border: 1px solid green; border-radius: 5px;">
         {% if was_created %}
         ✓ Nowy typ został zapisany pomyślnie!
@@ -12,18 +11,16 @@
         {% endif %}
     </div>
 
-        {% endif %}
+    {% endif %}
 
-        <div style="margin-bottom: 10px;">
-            <strong>{{ fixture.home_team.name|default:fixture.home_team }} — 
-                {{ fixture.away_team.name|default:fixture.away_team }}</strong><br>
-            <small>Data: {{ fixture.formatted_date }}</small><br>
-            <small>Kolejka: {{ fixture.round|default:"—" }}</small>
-        </div>
+    <div style="margin-bottom: 10px;">
+        <strong>{{ fixture.home_team.name|default:fixture.home_team }} —
+            {{ fixture.away_team.name|default:fixture.away_team }}</strong><br>
+        <small>Data: {{ fixture.formatted_date }}</small><br>
+        <small>Kolejka: {{ fixture.round|default:"—" }}</small>
+    </div>
 
-    <form hx-post="{% url 'htmx-prediction-create' %}"
-        hx-target="#match-{{ fixture.id }}"
-        hx-swap="outerHTML"
+    <form hx-post="{% url 'htmx-prediction-create' %}" hx-target="#match-{{ fixture.id }}" hx-swap="outerHTML"
         style="display: flex; align-items: center; gap: 10px;">
         {% csrf_token %}
 
@@ -59,9 +56,8 @@
             {% if fixture.user_prediction %}Popraw typ{% else %}Zapisz typ{% endif %}
         </button>
     </form>
-    </div>
+</div>
 
 {% empty %}
 <p>Brak meczów do typowania w tej kolejce.</p>
 {% endfor %}
-

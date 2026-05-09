@@ -30,8 +30,6 @@ def fetch_seasons():
     if response.status_code == 200:
         return response.json().get('response')
     else:
-        print(f"Error fetching seasons: {response.status_code}")
-        print(response.text)
         return []
     
 def save_seasons_to_db():

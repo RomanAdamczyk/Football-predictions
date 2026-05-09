@@ -34,8 +34,6 @@ def fetch_teams(league_id, season_year):
     if response.status_code == 200:
         return response.json().get('response', [])
     else:
-        print(f"Error fetching teams for league {league_id}, season {season_year}: {response.status_code}")
-        print(response.text)
         return []
 
 def save_teams_to_db():

@@ -1,13 +1,11 @@
 {% extends 'base.html' %}
-
-{% block title %}Test HTMX{% endblock %}
-
 {% block content %}
 <h1>Typowanie wyników meczy</h1>
 
-<!-- JEDEN kontener - wszystko! -->
-<div id="main-container">
-    {% include "partials/fixtures_list.html" %}
-  <p>Ładowanie...</p>
+{% include "partials/fixtures_list.html" %}
+
+<div id="fixtures-list">
+  <p>Wybierz kolejkę, aby zobaczyć mecze.</p>
 </div>
+
 {% endblock %}
