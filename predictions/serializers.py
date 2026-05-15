@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, get_user_model
 from .models import League, Season, Team, Fixture , Prediction, UserGroup
+
 
 class SeasonSerializer(serializers.HyperlinkedModelSerializer):
     """
@@ -318,4 +320,52 @@ class UserRankingSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'total_points']
 
+class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the User model, providing basic user information.
+    """
+    class Meta:
+        model = get_user_model()
+        fields = ['id', 'username', 'email']
+class LoginSerializer(serializers.Serializer):
+    """
+    Serializer for user login, accepting username and password.
+    """
+    username = serializers.CharField(
+        max_length=255,
+        required=True,
+        trim_whitespace=True,
+        error_messages={"required": "Nazwa użytkownika jest wymagana."}
+        )
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+        trim_whitespace=False,
+        error_messages={"required": "Hasło jest wymagane."}
+        )
+    remember_me = serializers.BooleanField(required=False, default=False)
 
+    def validate(self, attrs):
+        username = attrs.get('username')
+        password = attrs.get('password')
+
+        user = authenticate(
+            request=self.context.get('request'),
+            username=username,
+            password=password
+        )
+
+        if not user:
+            raise serializers.ValidationError(
+                "Nieprawidłowa nazwa użytkownika lub hasło.",
+                code='authorization'
+            )
+
+        if not user.is_active:
+            raise serializers.ValidationError(
+                "Konto zostało dezaktywowane.",
+                code='authorization'
+            )
+        
+        attrs['user'] = user
+        return attrs

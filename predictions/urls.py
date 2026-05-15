@@ -4,12 +4,15 @@ from .views.api import SeasonDetailView
 from .views.api import FixtureListView, FixtureDetailView
 from .views.api import PredictionListView, PredictionDetailView, PredictionCreateView, PredictionUpdateView
 from .views.api import GroupListView, CalculatePointsView, UserRankingView
-from .views.htmx import fixtures_partial, prediction_create_partial, matchdays_partial
+from .views.api import LoginView
+from .views.htmx import LoginHtmlView, fixtures_partial, prediction_create_partial, matchdays_partial
 
 urlpatterns = [
+    path('login/', LoginHtmlView.as_view(), name='login'),
     path('partial/fixtures/', fixtures_partial, name='htmx-fixtures'),
     path('partial/predictions/create/', prediction_create_partial, name='htmx-prediction-create'),
     path('partial/matchdays/', matchdays_partial, name='htmx-matchdays'),
+    path('api/login/', LoginView.as_view(), name='api-login'),
     path('api/usergroups/', GroupListView.as_view(), name='usergroup-list'),
     path('api/leagues/', LeagueListView.as_view(), name='league-list'),
     path('api/leagues/<int:pk>/', LeagueDetailView.as_view(), name='league-detail'),

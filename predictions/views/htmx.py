@@ -3,7 +3,7 @@
 from multiprocessing import context
 from urllib import request
 from rest_framework.request import Request
-
+from django.views import View
 from django.template.loader import render_to_string
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -15,49 +15,13 @@ from predictions.views.api import FixtureListView, PredictionCreateView, upsert_
 
 from rest_framework.test import APIRequestFactory
 
-
-# ========================
-# Widoki HTMX
-# ========================
-
 from rest_framework.request import Request
 
-# @login_required
-# def fixtures_partial(request):
-#     """HTMX view returning fixtures using existing DRF FixtureListView logic."""
-
-#     drf_request = Request(request)
-#     drf_request.user = request.user
-
-#     drf_view = FixtureListView()
-#     drf_view.request = drf_request
-#     access_code = request.GET.get('access_code')
-#     user_group = UserGroup.objects.filter(
-#         access_code=access_code, 
-#         members=request.user
-#     ).first()
-
-#     fixtures = drf_view.get_queryset()
-
-#     if fixtures is None:
-#         fixtures = Fixture.objects.none()
-
-#     serializer = FixtureSerializer(
-#         fixtures, 
-#         many=True, 
-#         context={'request': drf_request}
-#     )
-
-#     context = {
-#         'fixtures': serializer.data,
-#         'user_group': user_group,
-        
-#     }
-
-#     if request.htmx:
-#         return render(request, 'partials/fixtures_list.html', context)
-
-#     return render(request, 'predictions/test_fixtures.html', context)
+class LoginHtmlView(View):
+    """HTMX view returning the login form."""
+    def get(self, request):
+        next_url = request.GET.get('next', '/')
+        return render(request, 'predictions/login.html', {'next_url': next_url})
 
 @login_required
 def fixtures_partial(request):
@@ -146,3 +110,4 @@ def matchdays_partial(request):
     serializer = FixtureSerializer(fixtures, many=True, context={'request': drf_request})
 
     return render(request, 'partials/fixtures_list.html', {'fixtures': serializer.data})
+

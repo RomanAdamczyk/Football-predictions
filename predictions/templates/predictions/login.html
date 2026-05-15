@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+
+    <div class="card-header text-center">
+        Logowanie
+    </div>
+    <div class="card-body text-center">
+        <form hx-post="{% url 'api-login' %}" hx-target="#login-result" hx-swap="innerHTML"
+            hx-inficator="#loading-indicator">
+
+            {% csrf_token %}
+            <div class="mb-3">
+                <input type="text" name="username" class="form-control" placeholder="Login" required>
+            </div>
+            <div class="mb-3">
+                <input name="password" type="password" class="form-control" placeholder="Hasło" required>
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" id="remember_me" name="remember_me" class="form-check-input">
+                <label for="remember_me" class="form-check-label">Zapamiętaj mnie</label>
+            </div>
+            <input type="hidden" name="next" value="{{ next_url|default:'/' }}">
+
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary">Zaloguj
+                    <span id="loading-indicator" class="htmx-indicator">
+                        Logowanie...
+                    </span>
+                    <span class="htmx-inverted-indicator">
+                        Zaloguj się
+                    </span>
+                </button>
+            </div>
+
+        </form>
+    </div>
+    <div class="card-footer text-center">
+ 
+    </div>
+</div>
+
+<div id="login-result"></div>
+{% endblock %}

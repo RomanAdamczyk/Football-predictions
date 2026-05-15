@@ -1,4 +1,4 @@
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from urllib3 import request
@@ -6,9 +6,14 @@ from ..models import League, Season, Fixture, Prediction, UserGroup, User
 from ..serializers import LeagueSerializer, SeasonSerializer, FixtureSerializer, UserGroupSerializer
 from ..serializers import PredictionSerializer, PredictionCreateSerializer, PredictionUpdateSerializer, PredictionUpsertSerializer
 from ..serializers import CalculatePointsSerializer, UserRankingSerializer
+from ..serializers import LoginSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
 from django.db import models
+from django.contrib.auth import authenticate, login
+from django.utils.http import url_has_allowed_host_and_scheme
+from django_htmx.http import HttpResponseClientRedirect
+from django.http import HttpResponse
 
 class LeagueListView(generics.ListAPIView):
     queryset = League.objects.all()
@@ -162,3 +167,45 @@ def upsert_prediction(request):
     )
 
     return prediction, created
+
+class LoginView(APIView):
+    serializer_class = LoginSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(
+            data=request.data,
+            context={'request': request}
+        )
+        try: 
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            if serializer.errors.get('username') or serializer.errors.get('password'):
+                error_message = "Nieprawidłowy login lub hasło."
+            elif serializer.errors.get('non_field_errors'):
+                error_message = serializer.errors['non_field_errors'][0]
+            error_html = f'<div class="alert alert-danger" role="alert">{error_message}</div>'
+            
+            return HttpResponse(error_html, status=400)
+        
+        user = serializer.validated_data['user']
+        remember_me = serializer.validated_data.get('remember_me', False)
+
+        login(request, user)
+
+        if remember_me:
+            request.session.set_expiry(1209600)  # 2 tygodnie
+        else:
+            request.session.set_expiry(0)  # wygasa po zamknięciu przeglądarki
+
+        next_url = request.query_params.get('next')
+
+        if next_url and url_has_allowed_host_and_scheme(
+            next_url, 
+            allowed_hosts={request.get_host()}, 
+            require_https=request.is_secure()
+        ):
+            redirect_url = next_url
+        else:
+            redirect_url = "/"
+
+        return HttpResponseClientRedirect(redirect_url)
